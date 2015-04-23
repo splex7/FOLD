@@ -144,14 +144,33 @@ var curatedStoriesSub,
   newestStoriesSub,
   starredStoriesSub;
 
+var curatedStoriesSubLimit = 30;
+var trendingStoriesSubLimit = 30;
+var newestStoriesSubLimit = 30;
+var starredStoriesSubLimit = 30;
+
+var maxLimit = 100;
+
 var subscriptionsReady = new ReactiveDict();
 
 
 // these methods all keep the subscription open for the lifetime of the window, but can be called again safely
-var subscribeToCuratedStories = function(cb){
-  if(!curatedStoriesSub){
-    curatedStoriesSub = Meteor.subscribe("curatedStoriesPub", function(){
+var subscribeToCuratedStories = function(increaseLimit, cb){
+  var oldSub;
+  var actuallyIncreaseLimit = (increaseLimit && curatedStoriesSubLimit !== maxLimit)
+  if(increaseLimit && actuallyIncreaseLimit){
+    curatedStoriesSubLimit += 30;
+    curatedStoriesSubLimit = (curatedStoriesSubLimit < maxLimit) ? curatedStoriesSubLimit : maxLimit;
+    oldSub = curatedStoriesSub;
+  }
+  if(!curatedStoriesSub || actuallyIncreaseLimit){
+    curatedStoriesSub = Meteor.subscribe("curatedStoriesPub", curatedStoriesSubLimit, function(){
+      subscriptionsReady.set('curatedStories', false);
+      if (oldSub){
+        oldSub.stop();
+      }
       subscriptionsReady.set('curatedStories', true);
+
       if(cb){
         cb();
       }
@@ -162,10 +181,22 @@ var subscribeToCuratedStories = function(cb){
     }
   }
 };
-var subscribeToTrendingStories = function(cb){
-  if(!trendingStoriesSub){
-    trendingStoriesSub = Meteor.subscribe("trendingStoriesPub", function(){
+var subscribeToTrendingStories = function(increaseLimit, cb){
+  var oldSub;
+  var actuallyIncreaseLimit = (increaseLimit && trendingStoriesSubLimit !== maxLimit)
+  if(increaseLimit && actuallyIncreaseLimit){
+    trendingStoriesSubLimit += 30;
+    trendingStoriesSubLimit = (trendingStoriesSubLimit < maxLimit) ? trendingStoriesSubLimit : maxLimit;
+    oldSub = trendingStoriesSub;
+  }
+  if(!trendingStoriesSub || actuallyIncreaseLimit){
+    trendingStoriesSub = Meteor.subscribe("trendingStoriesPub", trendingStoriesSubLimit, function(){
+      subscriptionsReady.set('trendingStories', false);
+      if (oldSub){
+        oldSub.stop();
+      }
       subscriptionsReady.set('trendingStories', true);
+
       if(cb){
         cb();
       }
@@ -176,10 +207,22 @@ var subscribeToTrendingStories = function(cb){
     }
   }
 };
-var subscribeToNewestStories = function(cb){
-  if(!newestStoriesSub){
-    newestStoriesSub = Meteor.subscribe("newestStoriesPub", function(){
+var subscribeToNewestStories = function(increaseLimit, cb){
+  var oldSub;
+  var actuallyIncreaseLimit = (increaseLimit && newestStoriesSubLimit !== maxLimit)
+  if(increaseLimit && actuallyIncreaseLimit){
+    newestStoriesSubLimit += 30;
+    newestStoriesSubLimit = (newestStoriesSubLimit < maxLimit) ? newestStoriesSubLimit : maxLimit;
+    oldSub = newestStoriesSub;
+  }
+  if(!newestStoriesSub || actuallyIncreaseLimit){
+    newestStoriesSub = Meteor.subscribe("newestStoriesPub", newestStoriesSubLimit, function(){
+      subscriptionsReady.set('newestStories', false);
+      if (oldSub){
+        oldSub.stop();
+      }
       subscriptionsReady.set('newestStories', true);
+
       if(cb){
         cb();
       }
@@ -191,10 +234,21 @@ var subscribeToNewestStories = function(cb){
   }
 };
 
-var subscribeToStarredStories = function(cb){
-  if(!starredStoriesSub){
-    starredStoriesSub = Meteor.subscribe("starredStoriesPub", function(){
+var subscribeToStarredStories = function(increaseLimit, cb){
+  var oldSub;
+  var actuallyIncreaseLimit = (increaseLimit && starredStoriesSubLimit !== maxLimit)
+  if(increaseLimit && actuallyIncreaseLimit){
+    starredStoriesSubLimit += 30;
+    oldSub = starredStoriesSubLimit = (starredStoriesSubLimit < maxLimit) ? starredStoriesSubLimit : maxLimit;
+  }
+  if(!starredStoriesSub || actuallyIncreaseLimit){
+    starredStoriesSub = Meteor.subscribe("starredStoriesPub", starredStoriesSubLimit, function(){
+      subscriptionsReady.set('starredStories', false);
+      if (oldSub){
+        oldSub.stop();
+      }
       subscriptionsReady.set('starredStories', true);
+
       if(cb){
         cb();
       }
@@ -208,10 +262,10 @@ var subscribeToStarredStories = function(cb){
 
 Template.all_stories.onCreated(function(){
   var that = this;
-  subscribeToCuratedStories(function(){
-    subscribeToTrendingStories(function() {
-      subscribeToNewestStories(function(){
-        subscribeToStarredStories(function(){
+  subscribeToCuratedStories(false, function(){
+    subscribeToTrendingStories(false, function() {
+      subscribeToNewestStories(false, function(){
+        subscribeToStarredStories(false, function(){
           that.autorun(function(){
             that.subscribe('minimalUsersPub', Stories.find({ published: true}, {fields: {authorId:1}, reactive: false}).map(function(story){return story.authorId}));
           });
@@ -221,6 +275,11 @@ Template.all_stories.onCreated(function(){
   });
 });
 
+Template.all_stories.events({
+  mouseover: function(){
+    subscribeToCuratedStories(true)
+  }
+});
 Template.all_stories.helpers({ // most of these are reactive false, but they will react when switch back and forth due to nesting inside ifs (so they rerun when switching between filters)
   curatedStories: function() {
     if (subscriptionsReady.get('curatedStories')) {
@@ -253,9 +312,6 @@ Template.all_stories.helpers({ // most of these are reactive false, but they wil
   },
   showStarredStories: function(){
     return Session.equals('filterValue', 'starred')
-  },
-  storiesLoading: function(){
-    return(!(subscriptionsReady.get(Session.get('filterValue') + 'Stories')))
   }
 });
 

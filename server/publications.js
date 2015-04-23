@@ -24,7 +24,9 @@ Meteor.users._ensureIndex({
   username: 1
 });
 
-Meteor.publish("curatedStoriesPub", function() {
+
+Meteor.publish("curatedStoriesPub", function(limit) {
+  console.log(limit)
   return Stories.find({
     published: true,
     editorsPick: true
@@ -36,11 +38,11 @@ Meteor.publish("curatedStoriesPub", function() {
     sort: {
       editorsPickAt: -1
     },
-    limit: 30 // initial limit
+    limit: limit || 30 // initial limit
   });
 });
 
-Meteor.publish("newestStoriesPub", function() { // for now, it's just publishedAt (later should maybe be firstPublishedAt)
+Meteor.publish("newestStoriesPub", function(limit) { // for now, it's just publishedAt (later should maybe be firstPublishedAt)
   return Stories.find({
     published: true
   }, {
@@ -51,11 +53,11 @@ Meteor.publish("newestStoriesPub", function() { // for now, it's just publishedA
     sort: {
       publishedAt: -1
     },
-    limit: 30 // initial limit
+    limit: limit || 30 // initial limit
   });
 });
 
-Meteor.publish("trendingStoriesPub", function() { // for now, it's just the most views
+Meteor.publish("trendingStoriesPub", function(limit) { // for now, it's just the most views
   return Stories.find({
     published: true
   }, {
@@ -66,11 +68,11 @@ Meteor.publish("trendingStoriesPub", function() { // for now, it's just the most
     sort: {
       views: -1
     },
-    limit: 30 // initial limit
+    limit: limit || 30 // initial limit
   });
 });
 
-Meteor.publish("starredStoriesPub", function() { // TODO migrate current favorited and make this work!
+Meteor.publish("starredStoriesPub", function(limit) { // TODO migrate current favorited and make this work!
 
   return this.ready();
 
@@ -83,7 +85,7 @@ Meteor.publish("starredStoriesPub", function() { // TODO migrate current favorit
     sort: {
       'favoritedTotal': -1
     },
-    limit: 30 // initial limit
+    limit: limit || 30 // initial limit
   });
 });
 

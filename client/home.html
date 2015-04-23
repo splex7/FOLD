@@ -175,28 +175,37 @@
   {{#if showNewestStories}}
     {{#each newestStories}}
       {{> story_preview }}
+    {{else}}
+      {{> _loading_container}}
     {{/each}}
   {{/if}}
   {{#if showCuratedStories}}
     {{#each curatedStories}}
       {{> story_preview }}
+    {{else}}
+      {{> _loading_container}}
     {{/each}}
   {{/if}}
   {{#if showTrendingStories}}
     {{#each trendingStories}}
       {{> story_preview }}
+    {{else}}
+      {{> _loading_container}}
     {{/each}}
   {{/if}}
   {{#if showStarredStories}}
     {{#each starredStories}}
       {{> story_preview }}
+    {{else}}
+      {{> _loading_container}}
     {{/each}}
   {{/if}}
-  {{#if storiesLoading}}
+</template>
+
+<template name="_loading_container">
   <div class="loading-container">
     {{> loading_icon}}
   </div>
-  {{/if}}
 </template>
 
 <template name="story_preview">
