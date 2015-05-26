@@ -1,93 +1,131 @@
 <template name="profile">
-  <div class="navbar">
-    <i class="fa fa-bars fa-2x"></i>
+  {{> top_banner border="remix-border"}}
+  <div class="profile-section">
+    <section>
+      <div class="user-profile">
+        {{> user_profile}}
+      </div>
+    </section>
   </div>
-  <section class="banner">
-    <a href="/">
-      <div class="title">
-        <img src="/fold-title.png">
-      </div>
-    </a>
-    <div class="options">
-      <div id="create-story">
-        <a href="/create">
-          Create Story
-        </a>
-      </div>
-      {{> loginButtons}}
+    <div class="stories profile">
+      <section>
+        <div class="story-container profile">
+          {{> user_stories}}
+        </div>
+        <div class="horizontal-line"></div>
+        <div class="story-container profile">
+          {{> user_favorite_stories}}
+        </div>
+      </section>
     </div>
-    <div class="logo">
-      <img src="/logo.png">
-    </div>
-  </section>
 
-  <section class="stories">
-    {{> story_browser}}
-    <div class="horizontal-line">
-    </div>
-    <div class="story-container">
-      {{> user_stories}}
-    </div>
-  </section>
+  {{> contact_footer}}
 </template>
 
+
 <template name="user_profile">
-  <section class="profile-info">
-    <div class="user-name">
-      Alexis Hope
+  {{#if editing}}
+    <div class="user-info-form">
+      {{#autoForm collection=UsersCollection doc=currentUser id="updateProfileForm" type="method-update" meteormethod="updateProfile" validation="keyup"}}
+      <button type="submit" class="save-profile-button">Save</button>
+      
+       <div class="picture">
+        {{#if editingPicture}}
+          {{#c_upload}}
+            <input type="file" accept="image/*" class="overlay">
+          {{/c_upload}}
+        {{/if}}
+        {{#if uploadPreview}} 
+          <img class="profile-picture-large" src="{{uploadPreview}}">
+        {{else}}
+          {{#if profileImage user}} 
+           <img class="profile-picture-large" src="{{profileImage user 'large'}}"/>
+          {{/if}}
+        {{/if}}
+     </div>
+      <div class="user-info">
+        {{> afQuickField name='profile.name'}}
+        {{> afQuickField name='profile.bio' class="bio-form"}}
+      </div>
+    {{/autoForm}}
+  </div>
+  {{else}}
+    {{#if ownProfile}}
+      <button class="edit-profile">Edit</button>
+    {{/if}}
+    <div class="picture">
+      {{#if profileImage user}} 
+         <img class="profile-picture-large" src="{{profileImage user 'large'}}"/>
+      {{/if}}
     </div>
-    <div class="affiliation">
-      <a href="www.newyorktimes.com">New York Times</a>
-    </div>
-    <div class="user-twitter">
-      <a href="www.twitter.com/alexishope">@alexishope</a>
-    </div>
-    <div class="about-me">
-      This is the story of my life.
-    </div>
-    <div class="profile-picture">
-    </div>
-  </section>
+    <div class="name">{{name}}</div>
+    <div class="bio">{{bio}}</div>
+  {{/if}}
 </template>
 
 <template name="user_stories">
-  {{#if currentUser}}
-    {{#each userStories}}
-      <div class="story" data-story-id="{{_id}}">
-        {{#if profileImageExists}}
-          <img class="profile-picture" src="{{profileImage}}"/>
-        {{/if}}
-        <div class="headline">
-          {{title}}
-          <div class="byline">
-            By {{displayName}}
-          </div>
+  <h1>Latest stories</h1>
+  {{#if hasPublished}}
+    {{#if showAllPublishedButton}}
+      <button class="toggle-published">
+        See {{#if seeAllPublished}}fewer{{else}}all{{/if}} stories
+      </button>
+    {{/if}}
+    {{#each publishedStories}}
+        <div class="profile story" data-story-id="{{_id}}">
+          {{> _story_preview_content}}
         </div>
-
-        <div class="content">
-          {{previewContent}}
-        </div>
-
-        <div class="dates">
-          <p>Last Edited: {{lastEditDate}}</p>
-          <p>
-            {{#if published}}
-              Published On: {{lastPublishDate}}
-              {{else}}
-              Unpublished
-            {{/if}}
-          </p>
-        </div>
-
-         <div class="edit-or-read">
-          <a href="{{url}}">
-            <div id="edit-this-story">
-              Edit this story >
-              <!-- needs switch to 'unfold this story' for main page -->
-            </div>
-          </a>
-        </div>
-      </div>
     {{/each}}
+  {{else}}
+    <div class="message">{{unpublishedMessage}}</div>
   {{/if}}
+</template>
+
+<template name="user_favorite_stories">
+  <h1>Favorites</h1>
+  {{#if hasFavorites}}
+    {{#if showAllFavoritesButton}}
+      <button class="toggle-favorites">
+        See {{#if seeAllFavorites}}fewer{{else}}all{{/if}} favorites
+      </button>
+    {{/if}}
+    {{#each favoriteStories}}
+        <div class="profile story" data-story-id="{{_id}}">
+          {{> _story_preview_content}}
+        </div>
+    {{/each}}
+  {{else}}
+    <div class="message">{{noFavoritesMessage}}</div>
+  {{/if}}
+</template>
+
+
+<template name="my_story_profile">
+  {{> top_banner border="remix-border"}}
+  <div class="stories">
+    <section>
+      <div class="story-container">
+        {{> my_stories}}
+      </div>
+    </section>
+  </div>
+</template>
+
+<template name="my_stories">
+  <h1>My Drafts</h1>
+  {{#each writtenStories}}
+      <div class="story" data-story-id="{{_id}}">
+        {{> _story_preview_content useDraftStory=true draftStory=draftStory}}
+        <!--<div class="dates">-->
+          <!--<p>Last Edited: {{lastEditDate}}</p>-->
+          <!--<p>-->
+            <!--{{#if published}}-->
+              <!--Published On: {{lastPublishDate}}-->
+              <!--{{else}}-->
+              <!--Unpublished-->
+            <!--{{/if}}-->
+          <!--</p>-->
+        <!--</div>-->
+      </div>
+  {{/each}}
 </template>
